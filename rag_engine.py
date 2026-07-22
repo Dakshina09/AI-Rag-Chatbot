@@ -204,21 +204,19 @@ QUESTION: {query}
 ANSWER:"""
 
 
-def call_openai(prompt, api_key, model="gpt-4o-mini"):
+def call_gemini(prompt, api_key, model="gemini-2.5-flash"):
+    """Google's Gemini API free tier -- no credit card needed, and Flash models
+    handle very long note documents well thanks to a large context window."""
     resp = requests.post(
-        "https://api.openai.com/v1/chat/completions",
-        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-        json={
-            "model": model,
-            "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0.3,
-            "max_tokens": 900,
-        },
+        f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}",
+        headers={"Content-Type": "application/json"},
+        json={"contents": [{"parts": [{"text": prompt}]}]},
         timeout=60,
     )
     if not resp.ok:
-        raise RuntimeError(f"OpenAI API error {resp.status_code}: {resp.text}")
-    return resp.json()["choices"][0]["message"]["content"]
+        raise RuntimeError(f"Gemini API error {resp.status_code}: {resp.text}")
+    data = resp.json()
+    return data["candidates"][0]["content"]["parts"][0]["text"]
 
 
 def call_groq(prompt, api_key, model="llama-3.3-70b-versatile"):
@@ -240,27 +238,6 @@ def call_groq(prompt, api_key, model="llama-3.3-70b-versatile"):
     return resp.json()["choices"][0]["message"]["content"]
 
 
-def call_anthropic(prompt, api_key, model="claude-sonnet-5"):
-    resp = requests.post(
-        "https://api.anthropic.com/v1/messages",
-        headers={
-            "x-api-key": api_key,
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json",
-        },
-        json={
-            "model": model,
-            "max_tokens": 900,
-            "messages": [{"role": "user", "content": prompt}],
-        },
-        timeout=60,
-    )
-    if not resp.ok:
-        raise RuntimeError(f"Anthropic API error {resp.status_code}: {resp.text}")
-    data = resp.json()
-    return "".join(b["text"] for b in data["content"] if b["type"] == "text")
-
-
 def extractive_fallback(retrieved_chunks):
     """Used when no LLM API key is configured -- still useful, just not
     a synthesized answer, so the app works out of the box."""
@@ -276,11 +253,9 @@ def extractive_fallback(retrieved_chunks):
 
 def generate_answer(query, retrieved_chunks, provider="none", api_key=None, model=None, history=None):
     prompt = build_prompt(query, retrieved_chunks, history=history)
-    if provider == "openai" and api_key:
-        return call_openai(prompt, api_key, model or "gpt-4o-mini")
-    elif provider == "anthropic" and api_key:
-        return call_anthropic(prompt, api_key, model or "claude-sonnet-5")
-    elif provider == "groq" and api_key:
+    if provider == "groq" and api_key:
         return call_groq(prompt, api_key, model or "llama-3.3-70b-versatile")
+    elif provider == "gemini" and api_key:
+        return call_gemini(prompt, api_key, model or "gemini-2.5-flash")
     else:
         return extractive_fallback(retrieved_chunks)
