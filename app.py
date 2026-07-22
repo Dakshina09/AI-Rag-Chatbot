@@ -92,9 +92,9 @@ else:
 # Sidebar: LLM provider settings
 # --------------------------------------------------------------------------
 # Known model choices per provider (kept short & current; edit freely).
+# Both providers below have genuinely free tiers with no credit card required.
 GROQ_MODELS = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "openai/gpt-oss-120b", "openai/gpt-oss-20b"]
-ANTHROPIC_MODELS = ["claude-sonnet-5", "claude-opus-4-8", "claude-haiku-4-5-20251001"]
-OPENAI_MODELS = ["gpt-4o-mini", "gpt-4o"]
+GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3.5-flash-lite"]
 
 
 def secret_key(name):
@@ -111,7 +111,7 @@ st.sidebar.markdown("---")
 st.sidebar.subheader("AI model")
 provider = st.sidebar.selectbox(
     "Provider",
-    ["None (extract passages only)", "Groq (free)", "Anthropic (Claude)", "OpenAI"],
+    ["None (extract passages only)", "Groq (free)", "Gemini (free)"],
 )
 api_key = None
 model_name = None
@@ -130,25 +130,18 @@ if provider == "Groq (free)":
         )
     model_name = st.sidebar.selectbox("Model", GROQ_MODELS)
 
-elif provider == "Anthropic (Claude)":
-    provider_key = "anthropic"
-    secret_val = secret_key("ANTHROPIC_API_KEY")
+elif provider == "Gemini (free)":
+    provider_key = "gemini"
+    secret_val = secret_key("GEMINI_API_KEY")
     if secret_val:
-        st.sidebar.success("Using ANTHROPIC_API_KEY from secrets ✅")
+        st.sidebar.success("Using GEMINI_API_KEY from secrets ✅")
         api_key = secret_val
     else:
-        api_key = st.sidebar.text_input("Anthropic API key", type="password")
-    model_name = st.sidebar.selectbox("Model", ANTHROPIC_MODELS)
-
-elif provider == "OpenAI":
-    provider_key = "openai"
-    secret_val = secret_key("OPENAI_API_KEY")
-    if secret_val:
-        st.sidebar.success("Using OPENAI_API_KEY from secrets ✅")
-        api_key = secret_val
-    else:
-        api_key = st.sidebar.text_input("OpenAI API key", type="password")
-    model_name = st.sidebar.selectbox("Model", OPENAI_MODELS)
+        api_key = st.sidebar.text_input(
+            "Gemini API key", type="password",
+            help="Free at aistudio.google.com — no credit card needed.",
+        )
+    model_name = st.sidebar.selectbox("Model", GEMINI_MODELS)
 
 top_k = st.sidebar.slider("Chunks to retrieve", min_value=2, max_value=8, value=4)
 
