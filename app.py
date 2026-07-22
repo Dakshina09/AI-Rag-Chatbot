@@ -93,7 +93,7 @@ else:
 # --------------------------------------------------------------------------
 # Known model choices per provider (kept short & current; edit freely).
 GROQ_MODELS = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "openai/gpt-oss-120b", "openai/gpt-oss-20b"]
-ANTHROPIC_MODELS = ["claude-sonnet-4-5-20250929", "claude-haiku-4-5-20251001"]
+ANTHROPIC_MODELS = ["claude-sonnet-5", "claude-opus-4-8", "claude-haiku-4-5-20251001"]
 OPENAI_MODELS = ["gpt-4o-mini", "gpt-4o"]
 
 
