@@ -216,7 +216,8 @@ def call_openai(prompt, api_key, model="gpt-4o-mini"):
         },
         timeout=60,
     )
-    resp.raise_for_status()
+    if not resp.ok:
+        raise RuntimeError(f"OpenAI API error {resp.status_code}: {resp.text}")
     return resp.json()["choices"][0]["message"]["content"]
 
 
@@ -234,11 +235,12 @@ def call_groq(prompt, api_key, model="llama-3.3-70b-versatile"):
         },
         timeout=60,
     )
-    resp.raise_for_status()
+    if not resp.ok:
+        raise RuntimeError(f"Groq API error {resp.status_code}: {resp.text}")
     return resp.json()["choices"][0]["message"]["content"]
 
 
-def call_anthropic(prompt, api_key, model="claude-sonnet-4-5-20250929"):
+def call_anthropic(prompt, api_key, model="claude-sonnet-5"):
     resp = requests.post(
         "https://api.anthropic.com/v1/messages",
         headers={
@@ -253,7 +255,8 @@ def call_anthropic(prompt, api_key, model="claude-sonnet-4-5-20250929"):
         },
         timeout=60,
     )
-    resp.raise_for_status()
+    if not resp.ok:
+        raise RuntimeError(f"Anthropic API error {resp.status_code}: {resp.text}")
     data = resp.json()
     return "".join(b["text"] for b in data["content"] if b["type"] == "text")
 
@@ -276,7 +279,7 @@ def generate_answer(query, retrieved_chunks, provider="none", api_key=None, mode
     if provider == "openai" and api_key:
         return call_openai(prompt, api_key, model or "gpt-4o-mini")
     elif provider == "anthropic" and api_key:
-        return call_anthropic(prompt, api_key, model or "claude-sonnet-4-5-20250929")
+        return call_anthropic(prompt, api_key, model or "claude-sonnet-5")
     elif provider == "groq" and api_key:
         return call_groq(prompt, api_key, model or "llama-3.3-70b-versatile")
     else:
